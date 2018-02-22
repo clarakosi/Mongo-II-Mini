@@ -16,7 +16,36 @@ server.get('/', function(req, res) {
   res.status(200).json({ api: 'running' });
 });
 
-mongoose.connect('mongodb://localhost/library').then(
+server.get('/books', (req, res) => {
+  Book.find()
+    .populate('authors', 'firstName lastName')
+    .select('title')
+    .then(books => {
+      res.status(200).json(books)
+    })
+    .catch(error => {
+      res.json(500).json({error});
+    })
+});
+
+server.get('/authors', (req, res) => {
+  Author.find({firstName: 'Martin'})
+    .select('_id')
+    .then(ids => {
+      Book.find()
+        .where('authors')
+        .in(ids)
+        .populate('authors', 'firstName lastName')
+        .then(books => {
+          res.status(200).json(books);
+        })
+    })
+    .catch(error => {
+      res.status(500).json({error});
+    })
+});
+
+mongoose.connect('mongodb://localhost/cs6').then(
   () => {
     const port = process.env.PORT || 3000;
     server.listen(port);
